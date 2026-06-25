@@ -89,10 +89,10 @@ N_ENVS             = 4         # parallel environments (speeds up data collectio
 N_STEPS            = 2048      # longer rollouts → better value estimates
 BATCH_SIZE         = 512       # N_STEPS × N_ENVS / 16
 N_EPOCHS           = 10        # gradient update passes per iteration
-LEARNING_RATE      = 2.5e-4    # RATE - too low -train slow , too high - oscillations and policy fails (default is adam's coeff)
-GAMMA              = 0.995     # Discount Factor - (higher discount → long-range goal stays relevant)
-ENT_COEF           = 0.02      # more entropy → more exploration around obstacles
-CLIP_RANGE         = 0.2       # PPO clipping parameter (the "proximal" constraint)
+LEARNING_RATE      = 2.5e-4    # RATE - too low -train slow , too high - oscillations and policy fails (default is adam's coeff) - Range {1e-5 to 3e-4}
+GAMMA              = 0.995     # Discount Factor - (higher discount → long-range goal stays relevant) - Range {0 to 1}
+ENT_COEF           = 0.02      # Exploration - (more entropy → more exploration around obstacles) - Range {0 to 0.1}
+CLIP_RANGE         = 0.2       # PPO clipping parameter (the "proximal" constraint) - Range{0.05 – 0.4}
 
 # Domain randomisation — random obstacles scattered each episode during training.
 # Teaches the agent to navigate around unseen obstacles at test time.
