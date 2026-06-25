@@ -86,11 +86,11 @@ MAX_STEPS = 1000
 # PPO hyperparameters
 TOTAL_TIMESTEPS    = 600_000   # more steps — harder task with random obstacles
 N_ENVS             = 4         # parallel environments (speeds up data collection)
-N_STEPS            = 2048      # 2× longer rollouts → better value estimates
-BATCH_SIZE         = 512       # matches N_STEPS × N_ENVS / 16
+N_STEPS            = 2048      # longer rollouts → better value estimates
+BATCH_SIZE         = 512       # N_STEPS × N_ENVS / 16
 N_EPOCHS           = 10        # gradient update passes per iteration
-LEARNING_RATE      = 2.5e-4    # slightly lower for stability with larger buffer
-GAMMA              = 0.995     # higher discount → long-range goal stays relevant
+LEARNING_RATE      = 2.5e-4    # RATE - too low -train slow , too high - oscillations and policy fails (default is adam's coeff)
+GAMMA              = 0.995     # Discount Factor - (higher discount → long-range goal stays relevant)
 ENT_COEF           = 0.02      # more entropy → more exploration around obstacles
 CLIP_RANGE         = 0.2       # PPO clipping parameter (the "proximal" constraint)
 

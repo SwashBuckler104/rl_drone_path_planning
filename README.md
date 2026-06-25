@@ -24,8 +24,6 @@ python train_ppo.py
 # 5. Dynamic obstacle test
 python test_rl.py
 
-# 6. A* vs RL comparison
-python compare_astar_rl.py
 ```
 
 ---
@@ -63,7 +61,6 @@ rl_drone_path_planning/
 │
 ├── train_ppo.py               ← PPO training script  ★
 ├── test_rl.py                 ← Dynamic obstacle test
-├── compare_astar_rl.py        ← Side-by-side A* vs RL comparison
 │
 ├── student_exercises/
 │   ├── drone_env_template.py      ← Exercise 1: build the Gym env

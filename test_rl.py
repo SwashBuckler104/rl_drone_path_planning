@@ -87,8 +87,8 @@ DYNAMIC_OBSTACLES = [
     (20, 33, 20),
     (26, 35, 20),  
     (30, 34, 50),
-    # (28, 34, 50),     # Fails seems exploration is lacking
     (32, 35, 50),
+    (28, 34, 50),     # Fails seems exploration is lacking
 ]
 
 # A* replanning: if True, A* is re-run on the map with all dynamic obstacles added,
@@ -101,6 +101,11 @@ ASTAR_REPLAN = True
 MAX_GIF_STEPS = 300
 
 OUTPUTS_DIR = os.path.join(PROJECT_ROOT, "outputs")
+
+# Set to True to generate a V(s) heatmap after the test episodes.
+# The PPO critic scores every free cell — warm = agent expects high reward,
+# cool = agent expects to struggle.  Saved as outputs/reward_map.png.
+SHOW_REWARD_MAP = True
 
 
 # ===========================================================================
@@ -428,6 +433,100 @@ def animate_episode(
 
 
 # ===========================================================================
+#  Reward / Value Map
+# ===========================================================================
+
+def plot_reward_map(
+    model:     "PPO",
+    env:       "DroneNavEnv",
+    base_grid: np.ndarray,
+    save_path: str,
+) -> None:
+    """
+    Render a PPO value-function heatmap over the occupancy grid.
+
+    For every free cell (r, c) the function builds the observation the drone
+    would have if it were standing there on the CLEAN (no dynamic obstacles)
+    map, then queries the PPO critic network for V(s) — the expected
+    cumulative discounted reward from that position.
+
+    Colour scale (RdYlGn):
+      Green  (high V)  →  agent expects to reach the goal from here
+      Red    (low V)   →  agent expects poor performance from here
+      Dark   (NaN)     →  obstacle / wall cell
+
+    The gradient should point roughly toward the goal with high values near
+    the goal and lower values in areas blocked by walls.
+    Flat or noisy regions indicate the agent hasn't learned well there.
+    """
+    import torch
+
+    H, W = base_grid.shape
+    value_map = np.full((H, W), np.nan, dtype=np.float32)
+
+    # Use the clean base map for raycasts so dynamic obstacles don't distort
+    # the picture.
+    saved_grid      = env.grid
+    env.grid        = base_grid.copy()
+
+    goal_x = env.goal_pos[1] / env._norm_w
+    goal_y = env.goal_pos[0] / env._norm_h
+
+    print("\n  Computing value map (querying PPO critic for every free cell) …")
+    for r in range(H):
+        for c in range(W):
+            if base_grid[r, c] == env.OBSTACLE:
+                continue
+            obs = np.array([
+                c / env._norm_w,
+                r / env._norm_h,
+                goal_x,
+                goal_y,
+                env._raycast(r, c, -1,  0) / env._norm_ray,
+                env._raycast(r, c, +1,  0) / env._norm_ray,
+                env._raycast(r, c,  0, -1) / env._norm_ray,
+                env._raycast(r, c,  0, +1) / env._norm_ray,
+            ], dtype=np.float32)
+            obs_t = torch.tensor(obs[None]).to(model.device)
+            with torch.no_grad():
+                value_map[r, c] = model.policy.predict_values(obs_t).item()
+
+    env.grid = saved_grid  # restore working grid
+
+    # ---- Plot ----
+    fig, ax = plt.subplots(figsize=(8, 8))
+
+    # Heatmap — NaN cells (obstacles) show as white background
+    cmap = plt.cm.RdYlGn.copy()
+    cmap.set_bad(color="#222222")   # obstacles render dark grey
+    im = ax.imshow(value_map, cmap=cmap, origin="upper",
+                   interpolation="nearest", aspect="equal")
+
+    cbar = plt.colorbar(im, ax=ax, fraction=0.03, pad=0.02)
+    cbar.set_label("V(s) — expected cumulative reward", fontsize=9)
+
+    # Start / goal markers
+    ax.plot(START_POS[1], START_POS[0], "o", color="#00E5FF",
+            markersize=12, markeredgecolor="white", markeredgewidth=1.5,
+            label="Start", zorder=5)
+    ax.plot(GOAL_POS[1],  GOAL_POS[0],  "*", color="#FFC107",
+            markersize=16, markeredgecolor="white", markeredgewidth=1.5,
+            label="Goal", zorder=5)
+
+    ax.set_title("PPO Value Map  —  V(s) per grid cell\n"
+                 "(green = agent expects high reward, red = expects to struggle)",
+                 fontsize=11, fontweight="bold")
+    ax.set_xlabel("Column")
+    ax.set_ylabel("Row")
+    ax.legend(loc="upper right", fontsize=9)
+
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=150, bbox_inches="tight")
+    print(f"  Saved reward map: {save_path}")
+    plt.close()
+
+
+# ===========================================================================
 #  Main
 # ===========================================================================
 
@@ -540,6 +639,14 @@ def main():
     else:
         print("  • On a static map, A* is optimal and always succeeds.")
         print("  • RL is typically near-optimal but may take a longer path.")
+
+    if SHOW_REWARD_MAP:
+        plot_reward_map(
+            model     = model,
+            env       = env,
+            base_grid = base_grid,
+            save_path = os.path.join(OUTPUTS_DIR, "reward_map.png"),
+        )
 
     env.close()
 
