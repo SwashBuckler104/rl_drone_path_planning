@@ -78,21 +78,21 @@ from envs.drone_env import DroneNavEnv
 #  Configuration — change these to experiment
 # ===========================================================================
 
-MAP_PATH  = os.path.join(PROJECT_ROOT, "maps", "training_map.pgm")
-START_POS = (3, 3)
-GOAL_POS  = (35, 35)
-MAX_STEPS = 1000
+MAP_PATH  = os.path.join(PROJECT_ROOT, "maps", "imported_map.pgm")
+START_POS = (10, 40)
+GOAL_POS  = (185, 185)
+MAX_STEPS = 2000   # shortest maze path can exceed 500 steps on this map
 
 # PPO hyperparameters
-TOTAL_TIMESTEPS    = 600_000   # more steps — harder task with random obstacles
-N_ENVS             = 4         # parallel environments (speeds up data collection)
-N_STEPS            = 2048      # longer rollouts → better value estimates
-BATCH_SIZE         = 512       # N_STEPS × N_ENVS / 16
-N_EPOCHS           = 10        # gradient update passes per iteration
-LEARNING_RATE      = 2.5e-4    # RATE - too low -train slow , too high - oscillations and policy fails (default is adam's coeff)
-GAMMA              = 0.995     # Discount Factor - (higher discount → long-range goal stays relevant)
-ENT_COEF           = 0.02      # more entropy → more exploration around obstacles
-CLIP_RANGE         = 0.2       # PPO clipping parameter (the "proximal" constraint)
+TOTAL_TIMESTEPS    = 1_000_000  # 1 M minimum for a 250×250 map — rule of thumb: ~10× grid cells
+N_ENVS             = 8          # more parallel envs → faster wall-clock training
+N_STEPS            = 2048       # longer rollouts → better value estimates
+BATCH_SIZE         = 512        # N_STEPS × N_ENVS / 32  (keep batch_size ≤ N_STEPS × N_ENVS)
+N_EPOCHS           = 10         # gradient update passes per iteration
+LEARNING_RATE      = 2.5e-4     # too low → slow; too high → oscillations  Range {1e-5 – 3e-4}
+GAMMA              = 0.995      # high discount keeps long-horizon goal relevant  Range {0 – 1}
+ENT_COEF           = 0.05       # raised: map has wall gaps the agent must explore to discover
+CLIP_RANGE         = 0.2        # PPO proximal constraint  Range {0.05 – 0.4}
 
 # Domain randomisation — random obstacles scattered each episode during training.
 # Teaches the agent to navigate around unseen obstacles at test time.

@@ -68,27 +68,16 @@ from astar.astar_planner import AStarPlanner
 #  Configuration
 # ===========================================================================
 
-MAP_PATH   = os.path.join(PROJECT_ROOT, "maps", "training_map.pgm")
+MAP_PATH   = os.path.join(PROJECT_ROOT, "maps", "imported_map.pgm")
 MODEL_PATH = os.path.join(PROJECT_ROOT, "models", "drone_ppo_final")
-START_POS = (3, 3)
-GOAL_POS  = (35, 35)
+START_POS = (10, 40)
+GOAL_POS  = (185, 185)
 MAX_STEPS = 1000
 
 # Dynamic obstacle config — format: (row, col, inject_step)
 # Each obstacle has its own step at which it appears.  Add as many as you like.
 DYNAMIC_OBSTACLES = [
-    (3, 20, 5), 
-    (4, 20, 2),      
-    (15, 3, 10), 
-    (20, 3, 10),
-    (15, 32, 20), 
-    (20, 31, 20),
-    (35, 33, 50),
-    (20, 33, 20),
-    (26, 35, 20),  
-    (30, 34, 50),
-    (32, 35, 50),
-    (28, 34, 50),     # Fails seems exploration is lacking
+
 ]
 
 # A* replanning: if True, A* is re-run on the map with all dynamic obstacles added,

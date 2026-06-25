@@ -96,15 +96,20 @@ class DroneNavEnv(gym.Env):
     │  REWARD FUNCTION                                                    │
     │                                                                     │
     │   +100.0   Reached the goal  (episode ends: terminated=True)       │
-    │    −1.0    Collision with obstacle (drone stays in place)          │
+    │    −0.5    Collision with obstacle (drone stays in place)          │
     │    −0.02   Time penalty — every step (encourages efficiency)       │
-    │    +0.1    Moved closer to goal  (Manhattan distance decreased)    │
-    │    −0.1    Moved away from goal  (Manhattan distance increased)    │
+    │    +0.5    Moved closer to goal  (Manhattan distance decreased)    │
+    │    −0.5    Moved away from goal  (Manhattan distance increased)    │
     │                                                                     │
     │  WHY REWARD SHAPING?                                               │
     │  Without dense rewards the agent only learns from the rare moment  │
     │  it stumbles onto the goal.  Shaping gives feedback on every step  │
     │  so the agent can learn "am I on the right track?" from the start. │
+    │                                                                     │
+    │  SCALE NOTE:  On large maps R_CLOSER must be strong enough to      │
+    │  outweigh collision noise in dense obstacle regions.  R_CLOSER=0.5 │
+    │  equals one collision penalty after 1 successful step, giving the  │
+    │  agent a clear gradient even near wall clusters.                   │
     └─────────────────────────────────────────────────────────────────────┘
     """
 
@@ -125,10 +130,10 @@ class DroneNavEnv(gym.Env):
 
     # Reward constants — adjust these to experiment with agent behaviour
     R_GOAL      =  100.0
-    R_COLLISION =   -1.0
+    R_COLLISION =   -0.5   # reduced: collision noise must not drown out directional shaping
     R_STEP      =   -0.02
-    R_CLOSER    =    0.1
-    R_FARTHER   =   -0.1
+    R_CLOSER    =    0.5   # raised: strong enough to guide through dense obstacle regions
+    R_FARTHER   =   -0.5
 
     def __init__(
         self,

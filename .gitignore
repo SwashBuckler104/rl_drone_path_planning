@@ -16,8 +16,8 @@ maps/*.pgm
 map.pgm
 
 # Trained models (run: python train_ppo.py to regenerate)
-models/*.zip
-models/drone_ppo_best/
+# models/*.zip
+# models/drone_ppo_best/
 
 # Training outputs (run: python test_rl.py / compare_astar_rl.py to regenerate)
 outputs/logs/
