@@ -1,3 +1,4 @@
+# Python
 venv/
 __pycache__/
 *.pyc
@@ -6,4 +7,23 @@ __pycache__/
 .ipynb_checkpoints/
 .env
 *.log
+
+# VSCode
 .vscode/
+
+# Generated maps (run: python maps/generate_map.py to regenerate)
+maps/*.pgm
+map.pgm
+
+# Trained models (run: python train_ppo.py to regenerate)
+models/*.zip
+models/drone_ppo_best/
+
+# Training outputs (run: python test_rl.py / compare_astar_rl.py to regenerate)
+outputs/logs/
+outputs/*.png
+outputs/*.gif
+outputs/*.jpg
+
+# Training demo screenshots — not part of the tutorial deliverable
+Training-show/

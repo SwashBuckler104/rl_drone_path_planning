@@ -120,6 +120,9 @@ class DroneNavEnv(gym.Env):
     LEFT  = 2
     RIGHT = 3
 
+    # (Δrow, Δcol) for each action — indexed by action int, avoids dict per call
+    _DELTAS = ((-1, 0), (1, 0), (0, -1), (0, 1))
+
     # Reward constants — adjust these to experiment with agent behaviour
     R_GOAL      =  100.0
     R_COLLISION =   -1.0
@@ -240,11 +243,8 @@ class DroneNavEnv(gym.Env):
             candidates = [(int(r), int(c)) for r, c in free
                           if (int(r), int(c)) not in exclude]
             if candidates:
-                rng = np.random.default_rng(
-                    int(self.np_random.integers(0, 2**31))
-                )
                 n = min(self.n_random_obstacles, len(candidates))
-                chosen = rng.choice(len(candidates), size=n, replace=False)
+                chosen = self.np_random.choice(len(candidates), size=n, replace=False)
                 for idx in chosen:
                     r, c = candidates[idx]
                     self.grid[r, c] = 1
@@ -474,12 +474,7 @@ class DroneNavEnv(gym.Env):
 
     def _delta(self, action: int) -> Tuple[int, int]:
         """Map action integer to (Δrow, Δcol)."""
-        return {
-            self.UP:    (-1,  0),
-            self.DOWN:  (+1,  0),
-            self.LEFT:  ( 0, -1),
-            self.RIGHT: ( 0, +1),
-        }[int(action)]
+        return self._DELTAS[int(action)]
 
     def _manhattan(self, pos: list, goal: tuple) -> float:
         """Manhattan (L1) distance between two grid cells."""

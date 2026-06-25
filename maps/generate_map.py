@@ -34,7 +34,6 @@ USAGE
 """
 
 import os
-import struct
 import numpy as np
 from typing import Optional, Tuple
 
@@ -104,10 +103,8 @@ def save_pgm(grid: np.ndarray, filepath: str) -> None:
         f.write("P2\n")
         f.write("# 2D Occupancy Grid — RL Drone Path Planning Tutorial\n")
         f.write("# Convention: 255=free space (white), 0=obstacle (black)\n")
-        f.write(f"{width} {height}\n")
-        f.write("255\n")
-        for row in pgm:
-            f.write(" ".join(map(str, row)) + "\n")
+        f.write(f"{width} {height}\n255\n")
+        np.savetxt(f, pgm, fmt="%d", delimiter=" ")
     print(f"  Saved: {filepath}  ({width}×{height})")
 
 
@@ -292,14 +289,9 @@ def _find_clear_cell(
     h, w = grid.shape
     for r in range(max(row_min, radius), min(row_max, h - radius)):
         for c in range(max(col_min, radius), min(col_max, w - radius)):
-            if grid[r, c] != 0:
+            if grid[r - radius : r + radius + 1, c - radius : c + radius + 1].any():
                 continue
-            if all(
-                grid[r + dr, c + dc] == 0
-                for dr in range(-radius, radius + 1)
-                for dc in range(-radius, radius + 1)
-            ):
-                return (r, c)
+            return (r, c)
     return None
 
 
