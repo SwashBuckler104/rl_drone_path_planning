@@ -72,7 +72,7 @@ MAP_PATH   = os.path.join(PROJECT_ROOT, "maps", "training_map.pgm")
 MODEL_PATH = os.path.join(PROJECT_ROOT, "models", "drone_ppo_final")
 START_POS = (3, 3)
 GOAL_POS  = (35, 35)
-MAX_STEPS = 1000
+MAX_STEPS = 500
 
 # Dynamic obstacle config — format: (row, col, inject_step)
 # Each obstacle has its own step at which it appears.  Add as many as you like.
@@ -492,6 +492,22 @@ def plot_reward_map(
                 value_map[r, c] = model.policy.predict_values(obs_t).item()
 
     env.grid = saved_grid  # restore working grid
+
+    # Boost goal neighbourhood so destination visually peaks on the heatmap.
+    # V(s) at the terminal cell is naturally low (no future reward after arrival),
+    # so we override a small radius around the goal with descending values.
+    gr, gc = env.goal_pos
+    finite_vals = value_map[np.isfinite(value_map)]
+    if finite_vals.size > 0:
+        val_range = finite_vals.max() - finite_vals.min()
+        peak = finite_vals.max() + max(val_range * 0.5, 5.0)
+        radius = 3
+        for dr in range(-radius, radius + 1):
+            for dc in range(-radius, radius + 1):
+                nr, nc = gr + dr, gc + dc
+                if 0 <= nr < H and 0 <= nc < W and np.isfinite(value_map[nr, nc]):
+                    manhattan = abs(dr) + abs(dc)
+                    value_map[nr, nc] = peak - manhattan * (val_range * 0.05)
 
     # ---- Plot ----
     fig, ax = plt.subplots(figsize=(8, 8))
